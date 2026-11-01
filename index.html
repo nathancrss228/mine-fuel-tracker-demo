@@ -13,6 +13,13 @@
 <label>Litres dispensed<input id="litres" type="number" min="0.1" step="0.1" inputmode="decimal" placeholder="Enter litres"></label>
 <button id="saveEntry" class="primary">Save fuel entry</button><div id="saveMessage" class="message" aria-live="polite"></div></section>
 <section class="panel"><div class="rowhead"><h2>Recent entries</h2><button id="exportBtn" class="textbtn">Export CSV</button></div><div id="entries" class="entries"><p class="muted">No entries recorded yet.</p></div></section>
+<section class="panel" id="reportsPanel"><div class="rowhead"><div><div class="eyebrow">REPORTING</div><h2>Fuel reports</h2></div><button id="reportExportBtn" class="textbtn">Export for Excel</button></div>
+<p class="muted">View fuel totals on this phone and export the matching transactions as a CSV file that opens in Excel.</p>
+<label>Period<select id="reportPeriod"><option value="all">All recorded entries</option><option value="today">Today</option><option value="week">Last 7 days</option><option value="month">This month</option></select></label>
+<label>Breakdown<select id="reportGroup"><option value="machine">Per machine</option><option value="operator">Per operator</option><option value="truck">Per service truck</option><option value="shift">Day vs night shift</option><option value="date">Per day</option></select></label>
+<div class="reporttotal"><small>Total fuel in selected period</small><strong id="reportTotal">0 L</strong><small id="reportCount">0 entries</small></div>
+<div id="reportRows" class="entries"><p class="muted">No fuel entries in this period.</p></div>
+</section>
 </section>
 <section id="admin" class="panel hidden"><div class="rowhead"><div><div class="eyebrow">ADMINISTRATION</div><h2>Setup lists</h2></div><button id="adminClose" class="textbtn">Close</button></div><p class="muted">Changes are saved on this device. Enter one operator or truck per line.</p><label>Operators<textarea id="operatorsText" rows="5" placeholder="Operator 1&#10;Operator 2&#10;Operator 3&#10;Operator 4"></textarea></label><label>Service trucks<textarea id="trucksText" rows="3" placeholder="ST009&#10;ST0066"></textarea></label><button id="saveAdmin" class="primary">Save settings</button><p class="notice">Machine register: 96 records imported. Edit machine details in the accompanying Excel register; a future admin screen will manage these centrally.</p></section>
 <footer>Prototype · Offline entries are stored on this device. Central synchronisation is not connected yet.</footer>
