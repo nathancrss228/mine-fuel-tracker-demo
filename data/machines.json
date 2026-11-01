@@ -1,0 +1,66 @@
+[
+  {
+    "qrId": "DEMO-001",
+    "assetNumber": "DEMO-TRUCK-01",
+    "description": "Demo service truck",
+    "category": "Service Trucks",
+    "active": true,
+    "reviewDescription": false
+  },
+  {
+    "qrId": "DEMO-002",
+    "assetNumber": "DEMO-TRUCK-02",
+    "description": "Demo backup service truck",
+    "category": "Service Trucks",
+    "active": true,
+    "reviewDescription": false
+  },
+  {
+    "qrId": "DEMO-003",
+    "assetNumber": "DEMO-DOZER-01",
+    "description": "Demo crawler dozer",
+    "category": "Dozers",
+    "active": true,
+    "reviewDescription": false
+  },
+  {
+    "qrId": "DEMO-004",
+    "assetNumber": "DEMO-DOZER-02",
+    "description": "Demo production dozer",
+    "category": "Dozers",
+    "active": true,
+    "reviewDescription": false
+  },
+  {
+    "qrId": "DEMO-005",
+    "assetNumber": "DEMO-DUMP-01",
+    "description": "Demo rear dump truck",
+    "category": "Rear Dumps",
+    "active": true,
+    "reviewDescription": false
+  },
+  {
+    "qrId": "DEMO-006",
+    "assetNumber": "DEMO-WATER-01",
+    "description": "Demo water truck",
+    "category": "Water Trucks",
+    "active": true,
+    "reviewDescription": false
+  },
+  {
+    "qrId": "DEMO-007",
+    "assetNumber": "DEMO-GRADER-01",
+    "description": "Demo motor grader",
+    "category": "Graders",
+    "active": true,
+    "reviewDescription": false
+  },
+  {
+    "qrId": "DEMO-008",
+    "assetNumber": "DEMO-LOADER-01",
+    "description": "Demo wheel loader",
+    "category": "Loaders",
+    "active": true,
+    "reviewDescription": false
+  }
+]
