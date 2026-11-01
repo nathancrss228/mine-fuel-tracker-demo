@@ -18,7 +18,31 @@ async function refresh(){renderReports();const es=(await allEntries()).filter(e=
 function exportCSV(){allEntries().then(es=>{if(!es.length)return alert('No fuel entries to export yet.');const cols=['DateTime','AssetNumber','Description','Litres','Shift','Operator','ServiceTruck','QR_ID','ShiftID'];const lines=[cols.join(','),...es.map(e=>[fmt(e.timestamp),e.assetNumber,e.description,e.litres,e.shiftType,e.operator,e.truck,e.qrId,e.shiftId].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(','))];const blob=new Blob([lines.join('\r\n')],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mine-fuel-entries.csv';a.click();URL.revokeObjectURL(a.href)})}
 function filteredReportEntries(es){const period=$('reportPeriod').value,now=new Date(),start=new Date(now);if(period==='today')start.setHours(0,0,0,0);else if(period==='week')start.setDate(start.getDate()-6),start.setHours(0,0,0,0);else if(period==='month')start.setDate(1),start.setHours(0,0,0,0);return period==='all'?es:es.filter(e=>e.timestamp>=start.getTime())}
 async function renderReports(){if(!db)return;const es=filteredReportEntries(await allEntries()),total=es.reduce((n,e)=>n+Number(e.litres||0),0);$('reportTotal').textContent=total.toLocaleString('en-AU',{maximumFractionDigits:1})+' L';$('reportCount').textContent=es.length+' fuel entries';const mode=$('reportGroup').value,groups={};for(const e of es){let key=mode==='machine'?e.assetNumber:mode==='operator'?e.operator:mode==='truck'?e.truck:mode==='shift'?e.shiftType:new Date(e.timestamp).toLocaleDateString('en-AU');groups[key]=(groups[key]||0)+Number(e.litres||0)}const rows=Object.entries(groups).sort((a,b)=>b[1]-a[1]);$('reportRows').innerHTML=rows.length?rows.map(([k,v])=>`<div class="reportrow"><div><strong>${esc(k||'Unknown')}</strong><small>${(v/Math.max(total,1)*100).toFixed(1)}% of selected fuel</small></div><b>${v.toLocaleString('en-AU',{maximumFractionDigits:1})} L</b></div>`).join(''):'<p class="muted">No fuel entries in this period.</p>'}
-async function exportReportCSV(){const es=filteredReportEntries(await allEntries());if(!es.length)return alert('No fuel entries in the selected period.');const cols=['DateTime','AssetNumber','Description','Litres','Shift','Operator','ServiceTruck','QR_ID','ShiftID'];const lines=[cols.join(','),...es.map(e=>[new Date(e.timestamp).toLocaleString('en-AU'),e.assetNumber,e.description,e.litres,e.shiftType,e.operator,e.truck,e.qrId,e.shiftId].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(','))];const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='mine-fuel-report.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+async function exportReportCSV(){
+ const es=filteredReportEntries(await allEntries());
+ if(!es.length)return alert('No fuel entries in the selected period.');
+ const csv=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+ const total=es.reduce((n,e)=>n+Number(e.litres||0),0);
+ const lines=[
+  'MINE FUEL TRACKER REPORT',
+  csv('Period')+','+csv($('reportPeriod').selectedOptions[0]?.textContent||'All recorded entries'),
+  csv('Total litres')+','+csv(total.toFixed(1)),
+  csv('Number of entries')+','+csv(es.length),
+  '',
+  'SUMMARY BY MACHINE',csv('Machine')+','+csv('Total litres'),
+ ];
+ const addSummary=(heading,key)=>{lines.push('',heading,csv('Name')+','+csv('Total litres'));const groups={};for(const e of es){const name=key==='_date'?new Date(e.timestamp).toLocaleDateString('en-AU'):(e[key]||'Unknown');groups[name]=(groups[name]||0)+Number(e.litres||0)}for(const [name,value] of Object.entries(groups).sort((a,b)=>b[1]-a[1]))lines.push(csv(name)+','+csv(value.toFixed(1)))};
+ const machineGroups={};for(const e of es){const name=e.assetNumber||'Unknown';machineGroups[name]=(machineGroups[name]||0)+Number(e.litres||0)}
+ for(const [name,value] of Object.entries(machineGroups).sort((a,b)=>b[1]-a[1]))lines.push(csv(name)+','+csv(value.toFixed(1)));
+ addSummary('SUMMARY BY OPERATOR','operator');
+ addSummary('SUMMARY BY SERVICE TRUCK','truck');
+ addSummary('SUMMARY BY SHIFT','shiftType');
+ addSummary('SUMMARY BY DAY','_date');
+ // Include a detailed transaction ledger after the summary for auditing.
+ lines.push('','DETAILED FUEL ENTRIES', ['DateTime','AssetNumber','Description','Litres','Shift','Operator','ServiceTruck','QR_ID','ShiftID'].map(csv).join(','));
+ for(const e of es)lines.push([new Date(e.timestamp).toLocaleString('en-AU'),e.assetNumber,e.description,e.litres,e.shiftType,e.operator,e.truck,e.qrId,e.shiftId].map(csv).join(','));
+ const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='mine-fuel-report.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)
+}
 async function startScanner(){if(!('BarcodeDetector'in window)){alert('This browser does not provide built-in QR scanning. Use the machine list for now, or open this app in a supported Android Chrome browser.');return}try{detector=new BarcodeDetector({formats:['qr_code']});stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});$('video').srcObject=stream;$('scanArea').classList.remove('hidden');await $('video').play();scanLoop=true;scanFrame()}catch(e){alert('Could not start camera. Check camera permission and make sure the app is hosted over HTTPS.') }}
 async function scanFrame(){if(!scanLoop)return;try{const codes=await detector.detect($('video'));if(codes.length){const raw=codes[0].rawValue.trim(),m=machines.find(x=>x.qrId===raw||x.assetNumber===raw);if(m){$('assetSelect').value=m.qrId;showAsset();$('saveMessage').textContent=`Identified ${m.assetNumber}`;stopScanner();return}}}catch(e){}requestAnimationFrame(scanFrame)}
 function stopScanner(){scanLoop=false;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$('video').srcObject=null;$('scanArea').classList.add('hidden')}
