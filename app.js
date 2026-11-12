@@ -111,7 +111,7 @@ async function checkLogin() {
   const { data, error } = await supabaseClient.auth.getSession();
 
   if (error) {
-    $('loginMessage').textContent = error.message;
+    $('loginMessage').textContent = error.message;fillSettings();online();renderReports();await checkLogin();
     return;
   }
 
@@ -121,4 +121,4 @@ async function checkLogin() {
 }
 
 $('loginBtn').onclick = login;
-(async()=>{try{const r=await fetch('data/machines.json');machines=await r.json();populateMachines();db=await openDB();fillSettings();online();renderReports();$('dateStamp').textContent='Shift date/time: '+fmt(Date.now())+' (automatic)';if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){alert('App setup failed: '+e.message)}})();
+(async()=>{try{const r=await fetch('data/machines.json');machines=await r.json();populateMachines();db=await openDB();fillSettings();online();renderReports();await checkLogin();$('dateStamp').textContent='Shift date/time: '+fmt(Date.now())+' (automatic)';if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){alert('App setup failed: '+e.message)}})();
