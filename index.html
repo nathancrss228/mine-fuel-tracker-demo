@@ -2,7 +2,23 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#18324b"><meta name="description" content="Offline-first mine fuel recording prototype"><link rel="manifest" href="manifest.webmanifest"><title>Mine Fuel Tracker</title><link rel="stylesheet" href="style.css"></head>
 <body><header><div class="brand"><div class="mark">⛽</div><div><strong>Mine Fuel Tracker</strong><small>Version 1.0 prototype</small></div></div><span id="connection" class="pill">Checking…</span></header>
 <main>
-<section id="setup" class="panel"><div class="eyebrow">SHIFT SETUP</div><h1>Start your shift</h1><p class="muted">Choose the operator, service truck and shift. The date and start time are recorded automatically.</p>
+  <section id="login" class="panel">
+  <div class="eyebrow">OPERATOR LOGIN</div>
+  <h1>Mine Fuel Tracker</h1>
+  <p class="muted">Sign in with your operator account.</p>
+
+  <label>Email
+    <input id="loginEmail" type="email" autocomplete="username" placeholder="Enter email">
+  </label>
+
+  <label>Password
+    <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Enter password">
+  </label>
+    
+  <button id="loginBtn" class="primary">Log in</button>
+  <div id="loginMessage" class="message" aria-live="polite"></div>
+  </section>
+<section id="setup" class="panel hidden"><div class="eyebrow">SHIFT SETUP</div><h1>Start your shift</h1><p class="muted">Choose the operator, service truck and shift. The date and start time are recorded automatically.</p>
 <label>Operator<select id="operator"></select></label><label>Service truck<select id="truck"></select></label><div class="field"><span class="label">Shift</span><div class="shift-options"><label class="choice"><input type="radio" name="shift" value="Day Shift" checked><span>☀️ Day shift</span></label><label class="choice"><input type="radio" name="shift" value="Night Shift"><span>🌙 Night shift</span></label></div></div>
 <div class="stamp" id="dateStamp">Date and time will be recorded when shift starts.</div><button id="startShift" class="primary">Start shift</button><button id="adminOpen" class="textbtn">Administration · edit operators and trucks</button></section>
 <section id="work" class="hidden">
@@ -23,4 +39,5 @@
 </section>
 <section id="admin" class="panel hidden"><div class="rowhead"><div><div class="eyebrow">ADMINISTRATION</div><h2>Setup lists</h2></div><button id="adminClose" class="textbtn">Close</button></div><p class="muted">Changes are saved on this device. Enter one operator or truck per line.</p><label>Operators<textarea id="operatorsText" rows="5" placeholder="Operator 1&#10;Operator 2&#10;Operator 3&#10;Operator 4"></textarea></label><label>Service trucks<textarea id="trucksText" rows="3" placeholder="ST009&#10;ST0066"></textarea></label><button id="saveAdmin" class="primary">Save settings</button><p class="notice">Machine register: 96 records imported. Edit machine details in the accompanying Excel register; a future admin screen will manage these centrally.</p></section>
 <footer>Prototype · Offline entries are stored on this device. Central synchronisation is not connected yet.</footer>
-</main><script src="app.js"></script></body></html>
+</main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
