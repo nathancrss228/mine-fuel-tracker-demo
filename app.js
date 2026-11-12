@@ -50,4 +50,115 @@ function online(){const ok=navigator.onLine;$('connection').textContent=ok?'Onli
 $('startShift').onclick=start;$('endShift').onclick=endShift;$('saveEntry').onclick=saveFuel;$('assetSelect').onchange=showAsset;$('scanBtn').onclick=startScanner;$('stopScan').onclick=stopScanner;$('exportBtn').onclick=exportCSV;$('reportPeriod').onchange=renderReports;$('reportGroup').onchange=renderReports;$('reportExportBtn').onclick=exportReportCSV;
 $('adminOpen').onclick=()=>{$('setup').classList.add('hidden');$('admin').classList.remove('hidden')};$('adminClose').onclick=()=>{$('admin').classList.add('hidden');$('setup').classList.remove('hidden')};$('saveAdmin').onclick=()=>{const operators=$('operatorsText').value.split('\n').map(x=>x.trim()).filter(Boolean),trucks=$('trucksText').value.split('\n').map(x=>x.trim()).filter(Boolean);if(!operators.length||!trucks.length)return alert('Enter at least one operator and one service truck.');saveSettings({operators,trucks});fillSettings();alert('Settings saved on this device.');$('admin').classList.add('hidden');$('setup').classList.remove('hidden')};
 window.addEventListener('online',online);window.addEventListener('offline',online);
-(async()=>{try{const r=await fetch('data/machines.json');machines=await r.json();populateMachines();db=await openDB();fillSettings();online();renderReports();$('dateStamp').textContent='Shift date/time: '+fmt(Date.now())+' (automatic)';if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){alert('App setup failed: '+e.message)}})();
+
+const SUPABASE_URL = 'https://bzbbwhyauvatueubcjzv.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_SL8Soi0Yl9A7W-Mu-mlnHA_0lZz6BkE';
+
+const supabaseClient = window.supabase
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
+
+let currentUser = null;
+let currentOperator = null;
+
+async function loadOperator(user) {
+  if (!supabaseClient) return false;
+
+  const { data, error } = await supabaseClient
+    .from('operators')
+    .select('id, name, role, active')
+    .eq('auth_user_id', user.id)
+    .maybeSingle();
+
+  if (error) {
+    $('loginMessage').textContent = 'Operator lookup failed: ' + error.message;
+    return false;
+  }
+
+  if (!data || data.active === false) {
+    await supabaseClient.auth.signOut();
+    $('loginMessage').textContent =
+      'No active operator account is linked to this login.';
+    return false;
+  }
+
+  currentUser = user;
+  currentOperator = data;
+
+  $('operator').innerHTML =
+    `<option value="${esc(data.name)}">${esc(data.name)}</option>`;
+  $('operator').value = data.name;
+  $('operator').disabled = true;
+
+  $('login').classList.add('hidden');
+  $('setup').classList.remove('hidden');
+
+  return true;
+}
+
+async function login() {
+  if (!supabaseClient) {
+    $('loginMessage').textContent = 'Supabase library could not load. Check your internet connection.';
+    return;
+  }
+
+  const email = $('loginEmail').value.trim();
+  const password = $('loginPassword').value;
+
+  $('loginMessage').textContent = 'Signing in...';
+
+  const { data, error } = await supabaseClient.auth
+    .signInWithPassword({ email, password });
+
+  if (error) {
+    $('loginMessage').textContent = error.message;
+    return;
+  }
+
+  await loadOperator(data.user);
+}
+
+async function checkLogin() {
+  if (!supabaseClient) {
+    $('loginMessage').textContent = 'Supabase library could not load.';
+    return;
+  }
+
+  const { data, error } = await supabaseClient.auth.getSession();
+
+  if (error) {
+    $('loginMessage').textContent = error.message;
+    return;
+  }
+
+  if (data.session) {
+    await loadOperator(data.session.user);
+  }
+}
+
+$('loginBtn').onclick = login;
+
+(async()=>{
+  try {
+    const r = await fetch('data/machines.json');
+    machines = await r.json();
+
+    populateMachines();
+    db = await openDB();
+    fillSettings();
+    online();
+    renderReports();
+
+    $('dateStamp').textContent =
+      'Shift date/time: ' + fmt(Date.now()) + ' (automatic)';
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
+    }
+
+    await checkLogin();
+
+  } catch(e) {
+    alert('App setup failed: ' + e.message);
+  }
+})();
