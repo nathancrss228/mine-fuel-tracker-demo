@@ -137,7 +137,24 @@ async function checkLogin() {
 }
 
 $('loginBtn').onclick = login;
+$('logoutBtn').onclick = async () => {
+  const { error } = await supabaseClient.auth.signOut();
 
+  if (error) {
+    $('loginMessage').textContent = 'Logout failed: ' + error.message;
+    return;
+  }
+
+  currentUser = null;
+  currentOperator = null;
+
+  $('setup').classList.add('hidden');
+  $('login').classList.remove('hidden');
+
+  $('loginEmail').value = '';
+  $('loginPassword').value = '';
+  $('loginMessage').textContent = 'You have been logged out.';
+};
 (async()=>{
   try {
     const r = await fetch('data/machines.json');
