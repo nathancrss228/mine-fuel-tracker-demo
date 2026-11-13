@@ -1,5 +1,6 @@
 const $=id=>document.getElementById(id);let machines=[],shift=null,db,stream=null,detector=null,scanLoop=false;
 const DB='mine-fuel-tracker',STORE='transactions';
+const SHIFT_STORE='shifts';
 function defaults(){return {operators:['Operator 1','Operator 2','Operator 3','Operator 4'],trucks:['ST009','ST0066']}}
 function settings(){try{return {...defaults(),...JSON.parse(localStorage.getItem('mft-settings')||'{}')}}catch{return defaults()}}
 function saveSettings(s){localStorage.setItem('mft-settings',JSON.stringify(s))}
