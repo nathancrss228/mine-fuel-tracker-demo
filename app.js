@@ -91,6 +91,7 @@ async function loadOperator(user) {
   currentOperator = data;
 
   $('adminOpen').classList.toggle('hidden', data.role !== 'admin');
+ $('logoutBtn').classList.remove('hidden');
   $('operator').innerHTML = `<option value="${esc(data.name)}">${esc(data.name)}</option>`;
   $('operator').value = data.name;
   $('operator').disabled = true;
