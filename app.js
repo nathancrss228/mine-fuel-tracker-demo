@@ -4,7 +4,27 @@ const SHIFT_STORE='shifts';
 function defaults(){return {operators:['Operator 1','Operator 2','Operator 3','Operator 4'],trucks:['ST009','ST0066']}}
 function settings(){try{return {...defaults(),...JSON.parse(localStorage.getItem('mft-settings')||'{}')}}catch{return defaults()}}
 function saveSettings(s){localStorage.setItem('mft-settings',JSON.stringify(s))}
-function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open(DB,1);req.onupgradeneeded=()=>{const d=req.result;if(!d.objectStoreNames.contains(STORE)){const st=d.createObjectStore(STORE,{keyPath:'id'});st.createIndex('shiftId','shiftId')}};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+function openDB(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(DB,2);
+
+    req.onupgradeneeded=()=>{
+      const d=req.result;
+
+      if(!d.objectStoreNames.contains(STORE)){
+        const st=d.createObjectStore(STORE,{keyPath:'id'});
+        st.createIndex('shiftId','shiftId');
+      }
+
+      if(!d.objectStoreNames.contains(SHIFT_STORE)){
+        d.createObjectStore(SHIFT_STORE,{keyPath:'id'});
+      }
+    };
+
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
 function allEntries(){return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly'),r=tx.objectStore(STORE).getAll();r.onsuccess=()=>resolve(r.result.sort((a,b)=>b.timestamp-a.timestamp));r.onerror=()=>reject(r.error)})}
 function addEntry(e){return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).add(e);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
 function fillSettings(){const s=settings();$('operator').innerHTML=s.operators.map(x=>`<option>${esc(x)}</option>`).join('');$('truck').innerHTML=s.trucks.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');$('truck').value=s.trucks.includes('ST009')?'ST009':s.trucks[0];$('operatorsText').value=s.operators.join('\n');$('trucksText').value=s.trucks.join('\n')}
