@@ -82,7 +82,7 @@ const supabaseClient = window.supabase
 
   currentUser = user;
   currentOperator = data;
-
+$('adminOpen').classList.toggle('hidden', data.role !== 'admin');
   $('operator').innerHTML =
     `<option value="${esc(data.name)}">${esc(data.name)}</option>`;
   $('operator').value = data.name;
