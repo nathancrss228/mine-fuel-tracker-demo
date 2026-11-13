@@ -51,15 +51,36 @@ $('startShift').onclick=start;$('endShift').onclick=endShift;$('saveEntry').oncl
 $('adminClose').onclick=()=>{$('admin').classList.add('hidden');$('setup').classList.remove('hidden')};$('saveAdmin').onclick=()=>{const operators=$('operatorsText').value.split('\n').map(x=>x.trim()).filter(Boolean),trucks=$('trucksText').value.split('\n').map(x=>x.trim()).filter(Boolean);if(!operators.length||!trucks.length)return alert('Enter at least one operator and one service truck.');saveSettings({operators,trucks});fillSettings();alert('Settings saved on this device.');$('admin').classList.add('hidden');$('setup').classList.remove('hidden')};
 window.addEventListener('online',online);window.addEventListener('offline',online);
 
+').value;
+
+  $('loginMessage').textContent = 'Signing in...';
+
+  const { data, error } = await supabaseClient.auth
+    .signInWithPassword({ email, password });
+
+  if (error) {
+    $('loginMessage').textContent = error.message;
+    return;
+  }
+
+
 const SUPABASE_URL = 'https://bzbbwhyauvatueubcjzv.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_SL8Soi0Yl9A7W-Mu-mlnHA_0lZz6BkE';
 
 const supabaseClient = window.supabase
-  ? window.supab$('adminOpen').onclick=()=>{
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
+
+let currentUser = null;
+let currentOperator = null;
+
+$('adminOpen').onclick = () => {
   if (!currentOperator || currentOperator.role !== 'admin') return;
   $('setup').classList.add('hidden');
   $('admin').classList.remove('hidden');
-};n loadOperator(user) {
+};
+
+async function loadOperator(user) {
   if (!supabaseClient) return false;
 
   const { data, error } = await supabaseClient
@@ -75,14 +96,15 @@ const supabaseClient = window.supabase
 
   if (!data || data.active === false) {
     await supabaseClient.auth.signOut();
-    $('loginMessage').textContent =
-      'No active operator account is linked to this login.';
+    $('loginMessage').textContent = 'No active operator account is linked to this login.';
     return false;
   }
 
   currentUser = user;
   currentOperator = data;
-$('adminOpen').classList.toggle('hidden', data.role !== 'admin');
+
+  $('adminOpen').classList.toggle('hidden', data.role !== 'admin');
+
   $('operator').innerHTML =
     `<option value="${esc(data.name)}">${esc(data.name)}</option>`;
   $('operator').value = data.name;
@@ -113,6 +135,26 @@ async function login() {
     return;
   }
 
+  await loadOperator(data.user);
+}
+
+async function checkLogin() {
+  if (!supabaseClient) {
+    $('loginMessage').textContent = 'Supabase library could not load.';
+    return;
+  }
+
+  const { data, error } = await supabaseClient.auth.getSession();
+
+  if (error) {
+    $('loginMessage').textContent = error.message;
+    return;
+  }
+
+  if (data.session) {
+    await loadOperator(data.session.user);
+  }
+}
 
 const SUPABASE_URL = 'https://bzbbwhyauvatueubcjzv.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_SL8Soi0Yl9A7W-Mu-mlnHA_0lZz6BkE';
