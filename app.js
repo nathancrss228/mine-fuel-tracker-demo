@@ -51,18 +51,6 @@ $('startShift').onclick=start;$('endShift').onclick=endShift;$('saveEntry').oncl
 $('adminClose').onclick=()=>{$('admin').classList.add('hidden');$('setup').classList.remove('hidden')};$('saveAdmin').onclick=()=>{const operators=$('operatorsText').value.split('\n').map(x=>x.trim()).filter(Boolean),trucks=$('trucksText').value.split('\n').map(x=>x.trim()).filter(Boolean);if(!operators.length||!trucks.length)return alert('Enter at least one operator and one service truck.');saveSettings({operators,trucks});fillSettings();alert('Settings saved on this device.');$('admin').classList.add('hidden');$('setup').classList.remove('hidden')};
 window.addEventListener('online',online);window.addEventListener('offline',online);
 
-').value;
-
-  $('loginMessage').textContent = 'Signing in...';
-
-  const { data, error } = await supabaseClient.auth
-    .signInWithPassword({ email, password });
-
-  if (error) {
-    $('loginMessage').textContent = error.message;
-    return;
-  }
-
 const SUPABASE_URL = 'https://bzbbwhyauvatueubcjzv.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_SL8Soi0Yl9A7W-Mu-mlnHA_0lZz6BkE';
 
