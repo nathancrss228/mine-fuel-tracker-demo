@@ -40,7 +40,32 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 function fmt(t){return new Date(t).toLocaleString('en-AU',{dateStyle:'medium',timeStyle:'short'})}
 function populateMachines(){ $('assetSelect').innerHTML='<option value="">Select a machine or scan its QR code</option>'+machines.map(m=>`<option value="${m.qrId}">${esc(m.assetNumber)} — ${esc(m.description||m.category)}</option>`).join('') }
 function showAsset(){const m=machines.find(x=>x.qrId===$('assetSelect').value);$('assetDetails').textContent=m?`${m.assetNumber} · ${m.description||'Description not supplied'} · ${m.category} · QR ${m.qrId}`:'No machine selected'}
-function start(){const operator=$('operator').value,truck=$('truck').value,shiftType=document.querySelector('input[name="shift"]:checked').value;if(!operator||!truck)return alert('Please set up an operator and service truck first.');shift={id:crypto.randomUUID(),operator,truck,shiftType,startedAt:Date.now()};$('setup').classList.add('hidden');$('work').classList.remove('hidden');$('shiftSummary').textContent=`${operator} · ${truck} · ${shiftType}`;$('shiftStarted').textContent=`Started ${fmt(shift.startedAt)}`;refresh()}
+async function start(){
+  const operator=$('operator').value;
+  const truck=$('truck').value;
+  const shiftType=document.querySelector('input[name="shift"]:checked').value;
+
+  if(!operator||!truck)return alert('Please set up an operator and service truck first.');
+
+  shift={
+    id:crypto.randomUUID(),
+    operator,
+    truck,
+    shiftType,
+    startedAt:Date.now(),
+    endedAt:null,
+    syncStatus:'local-only'
+  };
+
+  await saveShift(shift);
+
+  $('setup').classList.add('hidden');
+  $('work').classList.remove('hidden');
+  $('shiftSummary').textContent=`${operator} · ${truck} · ${shiftType}`;
+  $('shiftStarted').textContent=`Started ${fmt(shift.startedAt)}`;
+
+  refresh();
+}
 function endShift(){if(!confirm('End this shift? Fuel entries already saved will remain on this device.'))return;shift=null;$('work').classList.add('hidden');$('setup').classList.remove('hidden');stopScanner()}
 async function saveFuel(){const m=machines.find(x=>x.qrId===$('assetSelect').value),litres=Number($('litres').value);if(!m)return alert('Select or scan a machine.');if(!Number.isFinite(litres)||litres<=0)return alert('Enter a valid litres amount.');const e={id:crypto.randomUUID(),shiftId:shift.id,qrId:m.qrId,assetNumber:m.assetNumber,description:m.description,litres,timestamp:Date.now(),operator:shift.operator,truck:shift.truck,shiftType:shift.shiftType,syncStatus:'local-only'};await addEntry(e);$('litres').value='';$('assetSelect').value='';showAsset();$('saveMessage').textContent=`Saved ${litres.toLocaleString('en-AU')} L for ${m.assetNumber}. Stored on this device.`;refresh()}
 async function refresh(){renderReports();const es=(await allEntries()).filter(e=>shift&&e.shiftId===shift.id);$('entryCount').textContent=es.length;$('litreTotal').textContent=es.reduce((n,e)=>n+e.litres,0).toLocaleString('en-AU',{maximumFractionDigits:1})+' L';$('pendingCount').textContent=es.length;$('entries').innerHTML=es.length?es.map(e=>`<div class="entry"><div><strong>${esc(e.assetNumber)} · ${esc(e.description||'')}</strong><small>${fmt(e.timestamp)} · ${esc(e.operator)} · ${esc(e.truck)}</small></div><b>${e.litres.toLocaleString('en-AU')} L</b></div>`).join(''):'<p class="muted">No entries recorded yet.</p>'}
