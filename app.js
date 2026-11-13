@@ -27,6 +27,14 @@ function openDB(){
 }
 function allEntries(){return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly'),r=tx.objectStore(STORE).getAll();r.onsuccess=()=>resolve(r.result.sort((a,b)=>b.timestamp-a.timestamp));r.onerror=()=>reject(r.error)})}
 function addEntry(e){return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).add(e);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
+function saveShift(s){
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(SHIFT_STORE,'readwrite');
+    tx.objectStore(SHIFT_STORE).put(s);
+    tx.oncomplete=resolve;
+    tx.onerror=()=>reject(tx.error);
+  });
+}
 function fillSettings(){const s=settings();$('operator').innerHTML=s.operators.map(x=>`<option>${esc(x)}</option>`).join('');$('truck').innerHTML=s.trucks.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');$('truck').value=s.trucks.includes('ST009')?'ST009':s.trucks[0];$('operatorsText').value=s.operators.join('\n');$('trucksText').value=s.trucks.join('\n')}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function fmt(t){return new Date(t).toLocaleString('en-AU',{dateStyle:'medium',timeStyle:'short'})}
