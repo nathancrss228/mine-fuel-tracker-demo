@@ -113,6 +113,78 @@ async function login() {
     return;
   }
 
+
+const SUPABASE_URL = 'https://bzbbwhyauvatueubcjzv.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_SL8Soi0Yl9A7W-Mu-mlnHA_0lZz6BkE';
+
+const supabaseClient = window.supabase
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
+
+let currentUser = null;
+let currentOperator = null;
+
+$('adminOpen').onclick = () => {
+  if (!currentOperator || currentOperator.role !== 'admin') return;
+  $('setup').classList.add('hidden');
+  $('admin').classList.remove('hidden');
+};
+
+async function loadOperator(user) {
+  if (!supabaseClient) return false;
+
+  const { data, error } = await supabaseClient
+    .from('operators')
+    .select('id, name, role, active')
+    .eq('auth_user_id', user.id)
+    .maybeSingle();
+
+  if (error) {
+    $('loginMessage').textContent = 'Operator lookup failed: ' + error.message;
+    return false;
+  }
+
+  if (!data || data.active === false) {
+    await supabaseClient.auth.signOut();
+    $('loginMessage').textContent = 'No active operator account is linked to this login.';
+    return false;
+  }
+
+  currentUser = user;
+  currentOperator = data;
+
+  $('adminOpen').classList.toggle('hidden', data.role !== 'admin');
+
+  $('operator').innerHTML =
+    `<option value="${esc(data.name)}">${esc(data.name)}</option>`;
+  $('operator').value = data.name;
+  $('operator').disabled = true;
+
+  $('login').classList.add('hidden');
+  $('setup').classList.remove('hidden');
+
+  return true;
+}
+
+async function login() {
+  if (!supabaseClient) {
+    $('loginMessage').textContent = 'Supabase library could not load. Check your internet connection.';
+    return;
+  }
+
+  const email = $('loginEmail').value.trim();
+  const password = $('loginPassword').value;
+
+  $('loginMessage').textContent = 'Signing in...';
+
+  const { data, error } = await supabaseClient.auth
+    .signInWithPassword({ email, password });
+
+  if (error) {
+    $('loginMessage').textContent = error.message;
+    return;
+  }
+
   await loadOperator(data.user);
 }
 
@@ -135,6 +207,7 @@ async function checkLogin() {
 }
 
 $('loginBtn').onclick = login;
+
 $('logoutBtn').onclick = async () => {
   const { error } = await supabaseClient.auth.signOut();
 
@@ -147,12 +220,16 @@ $('logoutBtn').onclick = async () => {
   currentOperator = null;
 
   $('setup').classList.add('hidden');
+  $('admin').classList.add('hidden');
+  $('work').classList.add('hidden');
   $('login').classList.remove('hidden');
 
+  $('operator').disabled = false;
   $('loginEmail').value = '';
   $('loginPassword').value = '';
   $('loginMessage').textContent = 'You have been logged out.';
 };
+
 (async()=>{
   try {
     const r = await fetch('data/machines.json');
