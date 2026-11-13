@@ -91,8 +91,7 @@ async function loadOperator(user) {
   currentOperator = data;
 
   $('adminOpen').classList.toggle('hidden', data.role !== 'admin');
-  $('operator').innerHTML =
-    `<option value="${esc(data.name)}">${esc(data.name)}</option>`;
+  $('operator').innerHTML = `<option value="${esc(data.name)}">${esc(data.name)}</option>`;
   $('operator').value = data.name;
   $('operator').disabled = true;
 
@@ -165,6 +164,7 @@ $('logoutBtn').onclick = async () => {
   $('loginPassword').value = '';
   $('loginMessage').textContent = 'You have been logged out.';
 };
+
 (async()=>{
   try {
     const r = await fetch('data/machines.json');
