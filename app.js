@@ -66,10 +66,20 @@ async function start(){
 
   refresh();
 }
-function endShift(){if(!confirm('End this shift? Fuel entries already saved will remain on this device.'))return;shift=null;$('work').classList.add('hidden');$('setup').classList.remove('hidden');stopScanner()}
+
 async function saveFuel(){const m=machines.find(x=>x.qrId===$('assetSelect').value),litres=Number($('litres').value);if(!m)return alert('Select or scan a machine.');if(!Number.isFinite(litres)||litres<=0)return alert('Enter a valid litres amount.');const e={id:crypto.randomUUID(),shiftId:shift.id,qrId:m.qrId,assetNumber:m.assetNumber,description:m.description,litres,timestamp:Date.now(),operator:shift.operator,truck:shift.truck,shiftType:shift.shiftType,syncStatus:'local-only'};await addEntry(e);$('litres').value='';$('assetSelect').value='';showAsset();$('saveMessage').textContent=`Saved ${litres.toLocaleString('en-AU')} L for ${m.assetNumber}. Stored on this device.`;refresh()}
 async function refresh(){renderReports();const es=(await allEntries()).filter(e=>shift&&e.shiftId===shift.id);$('entryCount').textContent=es.length;$('litreTotal').textContent=es.reduce((n,e)=>n+e.litres,0).toLocaleString('en-AU',{maximumFractionDigits:1})+' L';$('pendingCount').textContent=es.length;$('entries').innerHTML=es.length?es.map(e=>`<div class="entry"><div><strong>${esc(e.assetNumber)} · ${esc(e.description||'')}</strong><small>${fmt(e.timestamp)} · ${esc(e.operator)} · ${esc(e.truck)}</small></div><b>${e.litres.toLocaleString('en-AU')} L</b></div>`).join(''):'<p class="muted">No entries recorded yet.</p>'}
-function exportCSV(){allEntries().then(es=>{if(!es.length)return alert('No fuel entries to export yet.');const cols=['DateTime','AssetNumber','Description','Litres','Shift','Operator','ServiceTruck','QR_ID','ShiftID'];const lines=[cols.join(','),...es.map(e=>[fmt(e.timestamp),e.assetNumber,e.description,e.litres,e.shiftType,e.operator,e.truck,e.qrId,e.shiftId].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(','))];const blob=new Blob([lines.join('\r\n')],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mine-fuel-entries.csv';a.click();URL.revokeObjectURL(a.href)})}
+function exportCSV(){allEntries().then(es=>{if(!es.length)return alert('No fuel entries to export yet.');const cols=['DateTime','AssetNumber','Description','Litres','Shift','Operator','ServiceTruck','QR_ID','ShiftID'];const lines=[cols.join(','),...es.map(e=>[fmt(e.timestamp),e.assetNumber,e.description,e.litres,e.shiftType,e.operator,e.truck,e.qrId,e.shiftId].map(v=>'"'+String(v??'')async function endShift(){
+  if(!confirm('End this shift? Fuel entries already saved will remain on this device.'))return;
+
+  shift.endedAt=Date.now();
+  await saveShift(shift);
+
+  shift=null;
+  $('work').classList.add('hidden');
+  $('setup').classList.remove('hidden');
+  stopScanner();
+}.replace(/"/g,'""')+'"').join(','))];const blob=new Blob([lines.join('\r\n')],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mine-fuel-entries.csv';a.click();URL.revokeObjectURL(a.href)})}
 function filteredReportEntries(es){const period=$('reportPeriod').value,now=new Date(),start=new Date(now);if(period==='today')start.setHours(0,0,0,0);else if(period==='week')start.setDate(start.getDate()-6),start.setHours(0,0,0,0);else if(period==='month')start.setDate(1),start.setHours(0,0,0,0);return period==='all'?es:es.filter(e=>e.timestamp>=start.getTime())}
 async function renderReports(){if(!db)return;const es=filteredReportEntries(await allEntries()),total=es.reduce((n,e)=>n+Number(e.litres||0),0);$('reportTotal').textContent=total.toLocaleString('en-AU',{maximumFractionDigits:1})+' L';$('reportCount').textContent=es.length+' fuel entries';const mode=$('reportGroup').value,groups={};for(const e of es){let key=mode==='machine'?e.assetNumber:mode==='operator'?e.operator:mode==='truck'?e.truck:mode==='shift'?e.shiftType:new Date(e.timestamp).toLocaleDateString('en-AU');groups[key]=(groups[key]||0)+Number(e.litres||0)}const rows=Object.entries(groups).sort((a,b)=>b[1]-a[1]);$('reportRows').innerHTML=rows.length?rows.map(([k,v])=>`<div class="reportrow"><div><strong>${esc(k||'Unknown')}</strong><small>${(v/Math.max(total,1)*100).toFixed(1)}% of selected fuel</small></div><b>${v.toLocaleString('en-AU',{maximumFractionDigits:1})} L</b></div>`).join(''):'<p class="muted">No fuel entries in this period.</p>'}
 async function exportReportCSV(){
