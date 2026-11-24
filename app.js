@@ -137,7 +137,10 @@ window.addEventListener('online',online);window.addEventListener('offline',onlin
 
 const SUPABASE_URL = 'https://bzbbwhyauvatueubcjzv.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_SL8Soi0Yl9A7W-Mu-mlnHA_0lZz6BkE';
-
+const TRUCK_IDS = {
+  ST0066: '045cc55b-9193-4f98-aef8-372ed599d022',
+  ST009: '3f15f13e-158c-47a8-acd8-b54b78cafc7b'
+};
 const supabaseClient = window.supabase
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
   : null;
