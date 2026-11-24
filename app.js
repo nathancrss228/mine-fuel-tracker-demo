@@ -226,6 +226,7 @@ async function loadOperator(user) {
 
   currentUser = user;
   currentOperator = data;
+  await syncShifts();
 
   $('adminOpen').classList.toggle('hidden', data.role !== 'admin');
  $('logoutBtn').classList.remove('hidden');
