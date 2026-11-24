@@ -141,6 +141,12 @@ const TRUCK_IDS = {
   ST0066: '045cc55b-9193-4f98-aef8-372ed599d022',
   ST009: '3f15f13e-158c-47a8-acd8-b54b78cafc7b'
 };
+const OPERATOR_IDS = {
+  'Operator 1': '53e61d94-c95c-4dff-92b0-aa8094a2265f',
+  'Operator 2': 'a9722d1e-0b69-4bb8-8cfe-2c40a9e6c1db',
+  'Operator 3': '80a36aa5-8e59-47eb-89f6-eb21d3109119',
+  'Operator 4': 'cc9e50fc-0ccd-46fc-80c0-e4a136013fa2'
+};
 const supabaseClient = window.supabase
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
   : null;
