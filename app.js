@@ -28,6 +28,50 @@ function openDB(){
 function allEntries(){return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly'),r=tx.objectStore(STORE).getAll();r.onsuccess=()=>resolve(r.result.sort((a,b)=>b.timestamp-a.timestamp));r.onerror=()=>reject(r.error)})}
 function addEntry(e){return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).add(e);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
 function saveShift(s){
+  async function syncShifts(){
+  if(!navigator.onLine || !supabaseClient || !currentOperator)return;
+
+  const tx=db.transaction(SHIFT_STORE,'readonly');
+  const req=tx.objectStore(SHIFT_STORE).getAll();
+
+  const shifts=await new Promise((resolve,reject)=>{
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+
+  for(const s of shifts){
+    if(s.syncStatus==='synced')continue;
+
+    const operatorId=OPERATOR_IDS[s.operator];
+    const truckId=TRUCK_IDS[s.truck];
+
+    if(!operatorId || !truckId){
+      console.error('Missing operator or truck ID for shift:',s);
+      continue;
+    }
+
+    const {error}=await supabaseClient
+      .from('shifts')
+      .upsert({
+        id:s.id,
+        operator_id:operatorId,
+        truck_id:truckId,
+        shift_type:s.shiftType,
+        started_at:new Date(s.startedAt).toISOString(),
+        ended_at:s.endedAt
+          ?new Date(s.endedAt).toISOString()
+          :null
+      });
+
+    if(error){
+      console.error('Shift sync failed:',error);
+      continue;
+    }
+
+    s.syncStatus='synced';
+    await saveShift(s);
+  }
+  }
   return new Promise((resolve,reject)=>{
     const tx=db.transaction(SHIFT_STORE,'readwrite');
     tx.objectStore(SHIFT_STORE).put(s);
