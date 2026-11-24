@@ -68,7 +68,27 @@ async function start(){
 }
 
 async function saveFuel(){const m=machines.find(x=>x.qrId===$('assetSelect').value),litres=Number($('litres').value);if(!m)return alert('Select or scan a machine.');if(!Number.isFinite(litres)||litres<=0)return alert('Enter a valid litres amount.');const e={id:crypto.randomUUID(),shiftId:shift.id,qrId:m.qrId,assetNumber:m.assetNumber,description:m.description,litres,timestamp:Date.now(),operator:shift.operator,truck:shift.truck,shiftType:shift.shiftType,syncStatus:'local-only'};await addEntry(e);$('litres').value='';$('assetSelect').value='';showAsset();$('saveMessage').textContent=`Saved ${litres.toLocaleString('en-AU')} L for ${m.assetNumber}. Stored on this device.`;refresh()}
-async function refresh(){renderReports();const es=(await allEntries()).filter(e=>shift&&e.shiftId===shift.id);$('entryCount').textContent=es.length;$('litreTotal').textContent=es.reduce((n,e)=>n+e.litres,0).toLocaleString('en-AU',{maximumFractionDigits:1})+' L';$('pendingCount').textContent=es.length;$('entries').innerHTML=es.length?es.map(e=>`<div class="entry"><div><strong>${esc(e.assetNumber)} · ${esc(e.description||'')}</strong><small>${fmt(e.timestamp)} · ${esc(e.operator)} · ${esc(e.truck)}</small></div><b>${e.litres.toLocaleString('en-AU')} L</b></div>`).join(''):'<p class="muted">No entries recorded yet.</p>'}
+async function refresh(){
+  renderReports();
+
+  const es=(await allEntries()).filter(e=>shift&&e.shiftId===shift.id);
+
+  $('entryCount').textContent=es.length;
+
+  $('litreTotal').textContent=
+    es.reduce((n,e)=>n+e.litres,0)
+      .toLocaleString('en-AU',{maximumFractionDigits:1})+' L';
+
+  $('pendingCount').textContent=
+    es.filter(e=>e.syncStatus!=='synced').length;
+
+  $('entries').innerHTML=es.length
+    ?es.map(e=>`<div class="entry"><div>
+        <strong>${esc(e.assetNumber)} · ${esc(e.description||'')}</strong>
+        <small>${fmt(e.timestamp)} · ${esc(e.operator)} · ${esc(e.truck)}</small>
+      </div><b>${e.litres.toLocaleString('en-AU')} L</b></div>`).join('')
+    :'<p class="muted">No entries recorded yet.</p>';
+}
 function exportCSV(){allEntries().then(es=>{if(!es.length)return alert('No fuel entries to export yet.');const cols=['DateTime','AssetNumber','Description','Litres','Shift','Operator','ServiceTruck','QR_ID','ShiftID'];const lines=[cols.join(','),...es.map(e=>[fmt(e.timestamp),e.assetNumber,e.description,e.litres,e.shiftType,e.operator,e.truck,e.qrId,e.shiftId].map(v=>'"'+String(v??'')async function endShift(){
   if(!confirm('End this shift? Fuel entries already saved will remain on this device.'))return;
 
